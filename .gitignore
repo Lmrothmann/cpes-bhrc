@@ -1,0 +1,34 @@
+# ── Controlled data — NEVER commit (BHRC individual-level data are not shareable) ──
+*.sav
+*.rds
+*.RDS
+*.dta
+*.tsv
+# CSV/XLSX: data by default. If you want to publish the cPES coefficient table
+# (eTable S2, model weights only — no individual data), force-add it explicitly:
+#   git add -f cPES_coefficients.csv
+*.csv
+*.xlsx
+*.xls
+
+# ── Analysis outputs / figures ──
+FINAL_WITH_SUBSTANCE/
+FINAL_NO_SUBSTANCE/
+Output/
+_CORRECTED_*/
+_REVIEW_ANALYSES/
+_SUPERSEDED_*/
+*.png
+*.pdf
+
+# ── R session cruft ──
+.Rhistory
+.RData
+.Rapp.history
+.Rproj.user/
+*.Rproj
+
+# ── OS / editor ──
+.DS_Store
+Thumbs.db
+desktop.ini
