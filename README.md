@@ -59,3 +59,22 @@ generating). Exact q values are reported throughout.
 - Excluded from this repo (not part of the final paper): CBCL-breadth / incremental-validity (circular),
   telomere analyses (companion paper), and a ComBat script with an alphabetical-gender bug — superseded
   by `05_site_combat_sensitivity.R`.
+
+
+## Applying the cPES to new data
+Running `01_build_cPES.R` also writes the complete model-application parameters:
+`cPES_apply_parameters.csv` (per-exposure median for imputation, Yeo-Johnson lambda,
+centering and scaling constants, and the elastic-net weight) and `cPES_intercept.txt`
+(the calibration intercept). `apply_cPES.R` is a self-contained helper that reproduces
+the full preprocessing-and-weighting pipeline to compute the cPES for a new sample.
+
+## Incremental R-squared and its confidence interval
+`12_incremental_dR2_bootstrap_CI.R` computes the cross-validated incremental R-squared
+(dR2) of adding the baseline cPES to a baseline-CBCL model at each follow-up wave, with a
+2,000-resample participant-level bootstrap 95% CI. The follow-up models are re-cross-validated
+within each resample (the baseline cPES enters as a fixed out-of-fold predictor).
+
+## Age at assessment
+Analyses use age at each assessment; for the participants without a recorded visit age
+(109 at the 8-year wave) baseline age is substituted. Results are identical under
+baseline-age-for-all.

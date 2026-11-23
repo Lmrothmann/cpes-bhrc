@@ -46,8 +46,12 @@ B<-read_sav("<BHRC_INPUT_DIR>/Grassi-Oliveira_167BHRC_2023_12_09.sav",encoding="
 wv<-function(x)c("wave0_arm_1"=0,"wave1_arm_1"=1,"wave2_arm_1"=2)[x]
 D<-B|>filter(redcap_event_name%in%c("wave0_arm_1","wave1_arm_1","wave2_arm_1"))|>transmute(ident=as.character(ident),wave=wv(redcap_event_name),age=as.numeric(age),gender=factor(gender),site=factor(site_original),dcany=dplyr::case_when(as.numeric(dcany)==2~1L,as.numeric(dcany)==0~0L,TRUE~NA_integer_))
 base<-B|>filter(redcap_event_name=="wave0_arm_1")|>transmute(ident=as.character(ident),cbcl0=as.numeric(cl_tot))
-cpes0<-D|>filter(wave==0)|>select(ident,age,gender,site)|>inner_join(cPES,by="ident")|>inner_join(base,by="ident")
-tab<-lapply(0:2,function(w){dd<-D|>filter(wave==w)|>select(ident,dcany)|>inner_join(cpes0,by="ident")|>filter(!is.na(dcany),!is.na(cbcl0))
+# Age rule: age at assessment (visit age) is used; for the few participants without a recorded
+# visit age (109 at the 8-year wave), baseline age is substituted. Results are identical under
+# baseline-age-for-all (OR 1.54 at 8 years either way); the fallback is used for consistency with
+# the longitudinal models and the reported Ns.
+cpes0<-D|>filter(wave==0)|>transmute(ident,age0=age,gender,site)|>inner_join(cPES,by="ident")|>inner_join(base,by="ident")
+tab<-lapply(0:2,function(w){dd<-D|>filter(wave==w)|>transmute(ident,dcany,age_fu=age)|>inner_join(cpes0,by="ident")|>filter(!is.na(dcany),!is.na(cbcl0))|>mutate(age=ifelse(is.na(age_fu),age0,age_fu))
   mu<-glm(dcany~cPES_z+age+gender+site,dd,family=binomial)
   if(w==0){data.frame(wave="W0",n=nrow(dd),cases=sum(dd$dcany==1),OR_unadj=round(exp(coef(mu)["cPES_z"]),2),AUC=round(auc(dd$dcany,predict(mu,type="response")),3),OR_adj=NA,adj_lo=NA,adj_hi=NA,adj_p=NA)}
   else{ma<-glm(dcany~cPES_z+scale(cbcl0)+age+gender+site,dd,family=binomial);ci<-exp(confint.default(ma)["cPES_z",])

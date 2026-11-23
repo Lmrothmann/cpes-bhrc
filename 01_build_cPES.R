@@ -386,7 +386,24 @@ run_enet_oof <- function(dat0, exposures, outdir, grp_title = "All sample"){
   # saves compatibility "02_" and new "06_"
   readr::write_csv(coef_enet, file.path(outdir,"02_enet_nonzero_coefs_FULLDATA_INTERPRET_ONLY.csv"))
   readr::write_csv(coef_enet, file.path(outdir,"06_enet_nonzero_coefs.csv"))
-  
+
+  # --- Complete application parameters, so the cPES can be applied to new data ---
+  # For a new participant: impute each exposure with impute_median, apply the Yeo-Johnson
+  # transform with yeojohnson_lambda, subtract center and divide by scale, multiply by weight,
+  # sum across exposures, and add the intercept (see apply_cPES.R).
+  .inter <- as.numeric(as.matrix(coef(enet_final$finalModel, enet_final$bestTune$lambda))[1,1])
+  apply_params <- tibble::tibble(
+    variable          = names(med_all),
+    impute_median     = as.numeric(med_all),
+    yeojohnson_lambda = as.numeric(preX_all$yj[names(med_all)]),
+    center            = as.numeric(preX_all$mean[names(med_all)]),
+    scale             = as.numeric(preX_all$std[names(med_all)]),
+    weight            = as.numeric(cf_final[names(med_all), 1]))
+  readr::write_csv(apply_params, file.path(outdir,"cPES_apply_parameters.csv"))
+  writeLines(sprintf("cPES intercept (standardized-outcome units): %.8f", .inter),
+             file.path(outdir,"cPES_intercept.txt"))
+  cat("Saved cPES_apply_parameters.csv and cPES_intercept.txt (complete model for application).\n")
+
   if (nrow(coef_enet) > 0) {
     coef_plot <- coef_enet %>%
       mutate(effect = if_else(beta >= 0, "risk", "protective")) %>%
